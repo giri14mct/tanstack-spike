@@ -8,6 +8,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import Input from "./components/input";
 
 type TableData = {
   id: number;
@@ -19,7 +20,6 @@ type TableData = {
 export default function App() {
   const [todoData, setTodoData] = useState<TableData[]>([]);
   const columnHelper = createColumnHelper<TableData>();
-  const [inputData, setInputData] = useState("");
 
   //@ts-ignore
   async function handleChange(data, id) {
@@ -52,19 +52,7 @@ export default function App() {
     }),
     columnHelper.accessor("name", {
       header: "Name",
-      cell: (info) => (
-        <>
-          <input
-            type="text"
-            className="w-full p-4 rounded-xl"
-            name="Name"
-            value={info.getValue()}
-            onChange={(e) =>
-              handleChange({ name: e.target.value }, info.row.original.id)
-            }
-          />
-        </>
-      ),
+      cell: (info) => <Input data={info} />,
     }),
     columnHelper.accessor("completed", {
       header: "Completed",
