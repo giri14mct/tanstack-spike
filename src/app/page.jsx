@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-
 import {
   createColumnHelper,
   flexRender,
@@ -10,18 +9,16 @@ import {
 } from "@tanstack/react-table";
 import Input from "./components/input";
 
-type TableData = {
-  id: number;
-  name: string;
-  completed: boolean;
-  color: string[];
-};
-
 export default function App() {
-  const [todoData, setTodoData] = useState<TableData[]>([]);
-  const columnHelper = createColumnHelper<TableData>();
+  const [todoData, setTodoData] = useState([]);
+  const [columnVisibility, setColumnVisibility] = useState({
+    id: true,
+    name: true,
+    completed: true,
+    color: true,
+  });
+  const columnHelper = createColumnHelper();
 
-  //@ts-ignore
   async function handleChange(data, id) {
     try {
       const response = await fetch(
@@ -49,10 +46,12 @@ export default function App() {
     columnHelper.accessor("id", {
       header: "ID",
       cell: (info) => info.getValue(),
+      isVisible: columnVisibility.id,
     }),
     columnHelper.accessor("name", {
       header: "Name",
       cell: (info) => <Input data={info} />,
+      isVisible: columnVisibility.name,
     }),
     columnHelper.accessor("completed", {
       header: "Completed",
@@ -66,6 +65,7 @@ export default function App() {
           }
         />
       ),
+      isVisible: columnVisibility.completed,
     }),
     columnHelper.accessor("color", {
       header: "Color",
@@ -87,12 +87,20 @@ export default function App() {
           })}
         </select>
       ),
+      isVisible: columnVisibility.color,
     }),
   ];
 
+  const toggleColumnVisibility = (columnName) => {
+    setColumnVisibility((prevState) => ({
+      ...prevState,
+      [columnName]: !prevState[columnName],
+    }));
+  };
+
   const table = useReactTable({
     data: todoData,
-    columns,
+    columns: columns.filter((column) => column.isVisible),
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -114,6 +122,21 @@ export default function App() {
 
   return (
     <>
+      <div>
+        <h3 className="mt-1 ml-1">Columns List</h3>
+        <div className="flex flex-col justify-around m-5">
+          {Object.keys(columnVisibility).map((column) => (
+            <label key={column} className="flex gap-3 text-lg">
+              <input
+                type="checkbox"
+                checked={columnVisibility[column]}
+                onChange={() => toggleColumnVisibility(column)}
+              />
+              {column}
+            </label>
+          ))}
+        </div>
+      </div>
       <table className="w-full border border-collapse table-auto border-slate-500">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
