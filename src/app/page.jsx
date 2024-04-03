@@ -8,16 +8,35 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Input from "./components/input";
+import Image from "next/image";
 
 export default function App() {
+  const [enableCreateButton, setEnableCreateButton] = useState(true);
   const [todoData, setTodoData] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({
     id: true,
     name: true,
     completed: true,
     color: true,
+    removeIcon: true,
   });
   const columnHelper = createColumnHelper();
+
+  const fetchData = async () => {
+    try {
+      const response = await fetch(
+        "https://65f8a8c2df151452460fdd23.mockapi.io/api/v1/todos"
+      );
+      const data = await response.json();
+      setTodoData(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   async function handleChange(data, id) {
     try {
@@ -39,6 +58,26 @@ export default function App() {
       }
     } catch (error) {
       console.error("Error updating data: ", error);
+    }
+  }
+
+  async function handleDelete(id) {
+    try {
+      const response = await fetch(
+        `https://65f8a8c2df151452460fdd23.mockapi.io/api/v1/todos/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        alert("Deleted successfully");
+        fetchData();
+      } else {
+        throw new Error("Failed to delete the item");
+      }
+    } catch (error) {
+      console.error("Error deleting data: ", error);
     }
   }
 
@@ -89,6 +128,22 @@ export default function App() {
       ),
       isVisible: columnVisibility.color,
     }),
+    columnHelper.accessor("removeIcon", {
+      header: "Remove Field",
+      cell: (info) => (
+        <div className="flex items-center justify-center">
+          <Image
+            src="assets/delete-icon.svg"
+            alt="image"
+            width={20}
+            height={20}
+            className="cursor-pointer"
+            onClick={() => handleDelete(info.row.original.id)}
+          />
+        </div>
+      ),
+      isVisible: columnVisibility.removeIcon,
+    }),
   ];
 
   const toggleColumnVisibility = (columnName) => {
@@ -104,21 +159,40 @@ export default function App() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const fetchData = async () => {
+  async function AddNewPostToRow() {
+    let prev_data = todoData[todoData.length - 1];
+    console.log(prev_data);
+    if (prev_data.name === "" || prev_data.name === "color") {
+      return alert("Please fill empty field");
+    }
+    const newTodoData = {
+      id: todoData.length + 1,
+      name: "",
+      completed: false,
+      color: "",
+    };
+
     try {
       const response = await fetch(
-        "https://65f8a8c2df151452460fdd23.mockapi.io/api/v1/todos"
+        `https://65f8a8c2df151452460fdd23.mockapi.io/api/v1/todos`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newTodoData),
+        }
       );
-      const data = await response.json();
-      setTodoData(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+      if (response.ok) {
+        fetchData();
+      } else {
+        throw new Error("Failed to update the item");
+      }
+    } catch (error) {
+      console.error("Error updating data: ", error);
+    }
+  }
 
   return (
     <>
@@ -172,6 +246,14 @@ export default function App() {
           ))}
         </tbody>
       </table>
+      <div className="flex justify-end">
+        <button
+          onClick={() => AddNewPostToRow()}
+          className="px-4 py-4 mt-10 mr-10 font-bold text-white bg-blue-500 rounded-full hover:bg-blue-700"
+        >
+          New Todo
+        </button>
+      </div>
     </>
   );
 }
