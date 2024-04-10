@@ -8,10 +8,10 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import Input from "./components/input";
+import ImageDisplayer from "./components/image-displayer";
 import Image from "next/image";
 
 export default function App() {
-  const [enableCreateButton, setEnableCreateButton] = useState(true);
   const [todoData, setTodoData] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({
     id: true,
@@ -19,6 +19,7 @@ export default function App() {
     completed: true,
     color: true,
     removeIcon: true,
+    images: true,
   });
   const columnHelper = createColumnHelper();
 
@@ -140,6 +141,17 @@ export default function App() {
             className="cursor-pointer"
             onClick={() => handleDelete(info.row.original.id)}
           />
+        </div>
+      ),
+      isVisible: columnVisibility.removeIcon,
+    }),
+    columnHelper.accessor("Images", {
+      header: "Avatar",
+      cell: (info) => (
+        <div className="relative flex">
+          {["G", "V", "J", "M", "S"].map((d, i) => (
+            <ImageDisplayer key={i} data={d} />
+          ))}
         </div>
       ),
       isVisible: columnVisibility.removeIcon,
